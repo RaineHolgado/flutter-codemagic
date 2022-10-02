@@ -2,6 +2,72 @@
 # Note that this configuration is not an exact match to UI settings. Review and adjust as necessary.
 
 workflows:
+  raine-android-build:
+    name: Firebase Android Distribution
+    max_build_duration: 60
+    environment:
+      flutter: 3.0.5
+      xcode: 13.4.1
+      cocoapods: 1.11.3
+      groups:
+        - keystore_credentials
+        - firebase_credentials
+        - google_play
+        # - secrets
+      vars:
+        CM_KEYSTORE_PATH: /tmp/keystore.keystore
+        PACKAGE_NAME: "com.codemagic.flutter"
+    triggering:
+      events:
+        - pull_request
+      branch_patterns:
+        - pattern: "*"
+          include: true
+          source: false
+      cancel_previous_builds: true
+    scripts:
+      - name: Set up key properties
+        script: |
+          echo $CM_KEYSTORE | base64 --decode > $CM_KEYSTORE_PATH
+          # The following script creates key.properties file and stores the credentials in it. As we configure code signing in app/build.gradle file, the following part is unnecessary unless code signing is configured differently as explained in the documentation: https://docs.codemagic.io/flutter-code-signing/android-code-signing/
+          # cat >> "$CM_BUILD_DIR/android/key.properties" <<EOF
+          # storePassword=$CM_KEYSTORE_PASSWORD
+          # keyPassword=$CM_KEY_PASSWORD
+          # keyAlias=$CM_KEY_ALIAS
+          # storeFile=$CM_KEYSTORE_PATH
+          # EOF
+      - name: Set up local.properties
+        script: |
+          echo "flutter.sdk=$HOME/programs/flutter" > "$CM_BUILD_DIR/android/local.properties"
+      - name: Get Flutter packages
+        script: |
+          flutter packages pub get
+      - name: Flutter analyze
+        script: |
+          flutter analyze
+      - name: Flutter unit tests
+        script: |
+          flutter test
+        ignore_failure: true
+      - name: Build AAB with Flutter
+        script: |
+          flutter build appbundle --release --build-name=1.0.0 --build-number=$(($(google-play get-latest-build-number --package-name "$PACKAGE_NAME" --tracks="$GOOGLE_PLAY_TRACK") + 1))
+    artifacts:
+      - build/**/outputs/**/*.aab
+      - build/**/outputs/**/mapping.txt
+      - flutter_drive.log
+    publishing:
+      firebase:
+        firebase_token: $FIREBASE_TOKEN
+        android:
+          app_id: $FIREBASE_APP_ID_ANDROID
+          groups:
+            - companion-qa
+          artifact_type: aab
+      email:
+        recipients:
+          - rainebayawa@gmail.com
+
   default-workflow:
     name: Default Workflow
     max_build_duration: 60
