@@ -53,6 +53,7 @@ workflows:
         script: |
           flutter build apk --release --build-number=$(git rev-list HEAD --count)
     artifacts:
+      - build/**/outputs/**/*.apk
       - build/**/outputs/**/*.aab
       - build/**/outputs/**/mapping.txt
       - flutter_drive.log
@@ -63,7 +64,7 @@ workflows:
           app_id: $FIREBASE_APP_ID_ANDROID
           groups:
             - android-testers
-          artifact_type: aab
+          artifact_type: apk
       email:
         recipients:
           - rainebayawa@gmail.com
