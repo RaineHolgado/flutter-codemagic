@@ -10,7 +10,7 @@ workflows:
       xcode: 13.4.1
       cocoapods: 1.11.3
       groups:
-        # - keystore_credentials
+        - keystore_credentials
         # - firebase_credentials
         - google_play
         # - secrets
