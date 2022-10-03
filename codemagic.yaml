@@ -49,9 +49,9 @@ workflows:
         script: |
           flutter test
         ignore_failure: true
-      - name: Build AAB with Flutter
+      - name: Build APK with Flutter
         script: |
-          flutter build appbundle --release --build-number=$(git rev-list HEAD --count)
+          flutter build apk --release --build-number=$(git rev-list HEAD --count)
     artifacts:
       - build/**/outputs/**/*.aab
       - build/**/outputs/**/mapping.txt
